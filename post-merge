@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# estudio@nahuelespino.com.ar - Nahuel Hernán Espiño
+
+# File should be in '.git/hooks'
+# Run 'chmod +x post-merge' to make it executable
+
+last_head=`cat last_head`
+changed_files="$(git diff-tree -r --name-only --no-commit-id $last_head HEAD)"
+
+##
+# check_run()
+# run command based on regex filter over changed_files
+#  args:
+#  $1 - fileNameRegex - file name regex to check
+#  $2 - command - command to execute
+#  $3 - description - description to show when check satisfies
+check_run() {
+    fileNameRegex="$1"
+    command="$2"
+    description="$3"
+
+	if echo "$changed_files" | grep --quiet "$fileNameRegex"; then
+	    echo " * changes detected in $fileNameRegex"
+	    echo " * $description"
+	    eval "$command";
+	fi
+}
+
+##
+# increment_file()
+# increment the number contained in a file
+#  args:
+#  $1 - fileName - file name to increment
+
+increment_file() {
+    fileName="$1"
+
+        oldnum=`cut -d ',' -f2 $1`
+        newnum=`expr $oldnum + 1`
+        sed -i "s/$oldnum\$/$newnum/g" $1
+}
+
+
+check_run static/ "increment_file version" "version file was incremented" 
+
+git rev-parse HEAD > last_head
+
